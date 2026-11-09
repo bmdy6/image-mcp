@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+*.egg-info/
+.env
+storage/
+output/
+
+image-mcp-output/
+.pytest_cache/
