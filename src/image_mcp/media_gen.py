@@ -25,6 +25,7 @@ RATIO_TO_SIZE = {
     "16:9": "1536x1024", "3:2": "1536x1024", "4:3": "1536x1024",
 }
 QUALITIES = ("low", "medium", "high", "auto")
+MAX_REFERENCES = 4
 _BAD_CHARS = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
 
 
@@ -79,14 +80,23 @@ def _extract_image(data: object) -> bytes:
     raise MediaError("生图响应里没有图片")
 
 
-def call_api(settings: Settings, prompt: str, size: str, quality: str, ref_bytes: bytes | None) -> bytes:
+def call_api(settings: Settings, prompt: str, size: str, quality: str, ref_bytes: list[bytes]) -> bytes:
     """One generation POST per call; errors never include provider payloads."""
-    endpoint = "/images/edits" if ref_bytes is not None else "/images/generations"
+    endpoint = "/images/edits" if ref_bytes else "/images/generations"
     payload = {"model": settings.model, "prompt": prompt, "n": 1, "quality": quality, "size": size}
+    if len(ref_bytes) == 1:
+        kwargs = {"data": payload, "files": {"image": ("ref.png", ref_bytes[0], "image/png")}}
+    elif ref_bytes:
+        files = [
+            ("image[]", (f"ref-{index}.png", content, "image/png"))
+            for index, content in enumerate(ref_bytes, start=1)
+        ]
+        kwargs = {"data": payload, "files": files}
+    else:
+        kwargs = {"json": payload}
     try:
         with requests.Session() as session:
             session.trust_env = False
-            kwargs = {"data": payload, "files": {"image": ("ref.png", ref_bytes, "image/png")}} if ref_bytes is not None else {"json": payload}
             with session.post(
                 settings.base_url + endpoint, headers={"Authorization": f"Bearer {settings.api_key}"},
                 timeout=(10, 180), allow_redirects=False, stream=True, **kwargs,
@@ -151,7 +161,8 @@ def save_image(raw: bytes, output_dir: Path, prompt: str) -> tuple[Path, str]:
 
 def generate(
     prompt: str, reference_image: str | None = None, aspect_ratio: str = "1:1",
-    style: str = "default", quality: str = "low",
+    style: str = "default", quality: str = "low", *,
+    reference_images: list[str] | None = None,
 ) -> dict[str, str]:
     """Generate and return absolute local path, actual size, style and prompt."""
     if not prompt.strip():
@@ -162,10 +173,17 @@ def generate(
         raise MediaError("不支持的风格模板")
     if quality not in QUALITIES:
         raise MediaError("不支持的画质，可选 low、medium、high、auto")
+    references = [] if reference_image is None else [reference_image]
+    if reference_images is not None:
+        if reference_image is not None:
+            raise MediaError("reference_image 和 reference_images 只能指定一个")
+        if not 1 <= len(reference_images) <= MAX_REFERENCES:
+            raise MediaError(f"reference_images 需要 1 至 {MAX_REFERENCES} 张参考图")
+        references = reference_images
     settings = Settings.from_env()
     final_prompt = wrap_prompt(style, prompt, quality)
     output_dir = _prepare_output_dir(settings.output_dir)
-    ref_bytes = load_ref(reference_image) if reference_image is not None else None
+    ref_bytes = [load_ref(reference) for reference in references]
     raw = call_api(settings, final_prompt, RATIO_TO_SIZE[aspect_ratio], quality, ref_bytes)
     path, size = save_image(raw, output_dir, prompt)
     return {"path": str(path), "size": size, "style": style, "final_prompt": final_prompt}

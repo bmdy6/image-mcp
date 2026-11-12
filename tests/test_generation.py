@@ -110,6 +110,9 @@ def test_edits_preserves_reference_frame(backend, monkeypatch, tmp_path, png):
 @pytest.mark.parametrize("kwargs", [
     {"prompt": " "}, {"prompt": "x", "style": "unknown"},
     {"prompt": "x", "aspect_ratio": "7:9"}, {"prompt": "x", "quality": "unknown"},
+    {"prompt": "x", "reference_images": []},
+    {"prompt": "x", "reference_images": ["ref.png"] * 5},
+    {"prompt": "x", "reference_image": "ref.png", "reference_images": ["another.png"]},
 ])
 def test_invalid_arguments_never_call_backend(kwargs, backend, monkeypatch):
     url, calls, _ = backend

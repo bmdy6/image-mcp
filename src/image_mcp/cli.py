@@ -19,7 +19,7 @@ def main() -> int:
     generate_cmd.add_argument("--style", choices=list(STYLE_HINTS), default="default")
     generate_cmd.add_argument("--ratio", choices=list(RATIO_TO_SIZE), default="1:1")
     generate_cmd.add_argument("--quality", choices=QUALITIES, default="low")
-    generate_cmd.add_argument("--ref", help="本地图片路径或公网 HTTPS 链接")
+    generate_cmd.add_argument("--ref", action="append", help="本地图片路径或公网 HTTPS 链接，可按顺序重复")
     commands.add_parser("styles", help="列出中文风格模板")
     search_cmd = commands.add_parser("search", help="检索本地参考案例")
     search_cmd.add_argument("query")
@@ -32,7 +32,8 @@ def main() -> int:
             run()
             return 0
         if args.command == "generate":
-            data = generate(args.prompt, args.ref, args.ratio, args.style, args.quality)
+            data = generate(args.prompt, aspect_ratio=args.ratio, style=args.style, quality=args.quality,
+                            reference_images=args.ref)
         elif args.command == "styles":
             data = list_styles()
         else:

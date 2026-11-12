@@ -1,6 +1,6 @@
 # image-mcp
 
-Developers: generate and edit local images from your AI agent through an OpenAI-compatible API.
+Generate and edit local images from your AI agent, or [change the pose or outfit of the same character](#change-a-characters-pose-or-outfit).
 
 [简体中文](README.md)
 
@@ -26,11 +26,15 @@ export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
 uvx --from git+https://github.com/bmdy6/image-mcp image-mcp generate "A blue ceramic teapot" --quality low
 ```
 
-Generation needs a valid key, network and Images API access. Results default to `image-mcp-output/` in the current directory.
+The API generation command above needs a valid key, a network connection, and Images API access. Results default to `image-mcp-output/` in the current directory.
 
 ## MCP configuration
 
-Ensure the client can find `uvx` on PATH, replace the key placeholder, then restart or reconnect MCP. All three launch the same stdio server from GitHub `main`.
+Ensure the client can find `uvx` on PATH. All three configurations launch the same stdio server from GitHub `main`. To update an existing installation, run the command below and reconnect MCP or restart the client.
+
+```sh
+uvx --refresh --from git+https://github.com/bmdy6/image-mcp image-mcp styles
+```
 
 ### Claude Code
 
@@ -57,13 +61,17 @@ Use `.mcp.json` in the project root and approve the project MCP when prompted.
 
 ### Codex
 
-Add to `~/.codex/config.toml`.
+Add this to `~/.codex/config.toml` to prepare references and use Codex's built-in image generation.
 
 ```toml
 [mcp_servers.image-mcp]
 command = "uvx"
 args = ["--from", "git+https://github.com/bmdy6/image-mcp", "image-mcp", "mcp"]
+```
 
+To also call `generate_image` through the API, add the block below to the same file and replace the placeholder.
+
+```toml
 [mcp_servers.image-mcp.env]
 OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
 ```
@@ -91,27 +99,46 @@ Use `.cursor/mcp.json` in the project.
 }
 ```
 
-Ask your agent: “Call `list_styles`, then generate a blue teapot with style `product` and quality `low`.” Generation is paid; `list_styles` and `search_reference_images` do not call the image API.
+To try API generation, ask your agent to use Image MCP's `generate_image` to draw a blue teapot with style `product` and quality `low`. The `list_styles`, `search_reference_images`, and `prepare_pose_image` tools work without a key.
 
 Configuration references: [Claude Code](https://code.claude.com/docs/en/mcp), [Codex](https://developers.openai.com/codex/mcp), [Cursor](https://cursor.com/docs/mcp).
 
 ## What you get
 
 - Generate local PNG images from prompts or references, returning absolute paths, actual dimensions, style and final prompt.
+- Repose the same character with a pose sketch, optionally using a separate outfit reference.
 - List and apply 21 built-in Chinese style templates.
 - Search original local examples for titles, styles, tags and sample prompts.
 
 ## How it works
 
 1. Choose with `list_styles()` or find examples with `search_reference_images(query, limit)`.
-2. Call `generate_image(prompt, reference_image?, aspect_ratio?, style?, quality?)`.
+2. Call `generate_image` with `reference_image` for one reference or `reference_images` for up to four ordered references.
 3. Open the local PNG at the returned `path`; the CLI returns the same JSON fields.
+
+### Change a character's pose or outfit
+
+| Original character | Waving | Arms extended |
+| --- | --- | --- |
+| ![Original robot character](docs/readme/pose-character.png) | ![The same robot waving with its right hand](docs/readme/pose-wave.webp) | ![The same robot with both arms extended](docs/readme/pose-arms-wide.webp) |
+
+Both samples came from Codex's built-in image generation, using the same [character image](docs/readme/pose-character.png) with either the [waving sketch](docs/readme/pose-wave-guide.png) or the [arms-extended sketch](docs/readme/pose-arms-wide-guide.png). The samples follow the pose and retain the colors and chest star, with some change in leg proportions.
+
+Save the character image and pose sketch locally and try this prompt in Codex.
+
+> Use Image MCP's `prepare_pose_image` with `pose-character.png` and `pose-wave-guide.png`. Keep the character's face, outfit, and colors, then generate the image with `$imagegen`.
+
+The tool accepts absolute paths to local images and optional `outfit_image` and `extra_prompt` arguments. It returns a `prompt` and ordered `reference_images` for the character, optional outfit, and pose.
+
+Codex sessions with built-in image generation can use both fields directly. Usage follows the Codex sign-in method. To use the Images API, pass both fields to `generate_image`. The provider must support edits with multiple references and bills the configured API key. [Codex image generation](https://learn.chatgpt.com/docs/image-generation)
+
+The reference order was inspired by [Lanpose](https://github.com/wzc520pyfm/gen-ai-pose-image). Use your own references or assets you have permission to use.
 
 ## Commands / options
 
 | Command / option | Purpose |
 |---|---|
-| `generate "prompt"` | Generate; `--ref` accepts a local image or public HTTPS URL. |
+| `generate "prompt"` | Generate. Repeat `--ref` in order for local images or public HTTPS URLs. |
 | `--style` | Template id; default `default`. |
 | `--ratio` / `--quality` | Default `1:1` / `low`; see limits below. |
 | `styles` / `search "海报" --limit 3` | List styles or search local examples offline. |
@@ -147,7 +174,7 @@ Configuration references: [Claude Code](https://code.claude.com/docs/en/mcp), [C
 
 | Variable | Default and purpose |
 |---|---|
-| `OPENAI_API_KEY` | Required for generation; supply your own key. |
+| `OPENAI_API_KEY` | Required when Image MCP calls the Images API. |
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1`; an OpenAI-compatible Images endpoint can be used. |
 | `IMAGE_MODEL` | `gpt-image-2`; your endpoint must support the model. |
 | `IMAGE_MCP_OUTPUT_DIR` | `./image-mcp-output`, relative to the server process working directory. |
@@ -157,7 +184,7 @@ Configuration references: [Claude Code](https://code.claude.com/docs/en/mcp), [C
 
 ### What does it cost?
 
-Every generation is billed to your key; `low` is cheapest. `medium`, `high` and `auto` are also supported. Prices depend on the provider, model and size; provider rules govern failed requests.
+Image MCP's API calls are billed to the configured key. Pricing depends on the provider, model, size, and quality. Codex's built-in image generation follows the session's sign-in method.
 
 ### Which references are accepted?
 
