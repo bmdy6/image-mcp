@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This project has been merged into [Visionary](https://github.com/bmdy6/visionary) (web app + AI assistant + MCP with shared credits). This repository is archived and no longer maintained.
+
 # image-mcp
 
 Generate and edit local images from your AI agent, or [change the pose or outfit of the same character](#change-a-characters-pose-or-outfit).

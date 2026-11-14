@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> 本项目已合并进 [Visionary](https://github.com/bmdy6/visionary)（网页 + AI 助手 + MCP，共用积分），这里不再维护，仓库已归档。
+
 # image-mcp
 
 给 AI agent 用的本地生图 MCP，支持文生图、参考图编辑，以及[同一角色换姿势或服装](#同一角色换姿势或服装)。
