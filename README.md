@@ -9,7 +9,7 @@
   <img src="docs/readme/hero-light.zh-CN.png" alt="提示词生成蓝色茶壶，参考图改成橙色，结果保存为本地 PNG" width="780">
 </picture>
 
-第一轮真实结果：提示词生成蓝壶，再参考它改成橙壶；均为 `low`。[原图、命令与复现说明](docs/readme/demo.md)。
+真实结果：提示词生成蓝壶，再参考它改成橙壶；均为 `low`。[原图、命令与复现说明](docs/readme/demo.md)。
 
 ## 快速开始
 
