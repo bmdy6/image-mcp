@@ -13,11 +13,11 @@ Recorded results: prompt → blue teapot; reference → orange teapot, both at `
 
 ## Quick start
 
-List 21 styles without an API key:
-
 ```sh
 uvx --from git+https://github.com/bmdy6/image-mcp image-mcp styles
 ```
+
+The command lists 21 styles without an API key.
 
 Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python ≥3.10; dependencies install on first use. Listing styles needs no key.
 
