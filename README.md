@@ -13,11 +13,11 @@
 
 ## 快速开始
 
-先列出 21 种风格，不需要 key：
-
 ```sh
 uvx --from git+https://github.com/bmdy6/image-mcp image-mcp styles
 ```
+
+以上命令列出 21 种风格，不需要 Key。
 
 需要 [uv](https://docs.astral.sh/uv/getting-started/installation/) 和 Python ≥3.10；首次运行会安装依赖。列风格不需要 key。
 
